@@ -110,7 +110,7 @@ kramdown:
   enable_coderay: false
   parse_block_html: true
 
-plugins: ["jekyll/scholar", "jekyll-sitemap"]
+plugins: ["jekyll/scholar", "jekyll-sitemap", "jekyll-scholar"]
 
 # Repository files that should not be published to the site
 exclude:
