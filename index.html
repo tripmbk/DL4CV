@@ -11,7 +11,21 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            /* Thiết lập hình nền công nghệ AI/Neural Network trừu tượng */
+            background-image: radial-gradient(rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98)), 
+                              url('https://unsplash.com');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .tech-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        /* Hiệu ứng kính mờ (Glassmorphism) giúp nội dung nổi bật trên hình nền */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
     </style>
 </head>
