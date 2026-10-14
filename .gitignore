@@ -1,8 +1,0 @@
-_site/
-.jekyll-cache/
-.sass-cache/
-.DS_Store
-vendor/
-.bundle/
-.worktrees/
-_config_pages.yml

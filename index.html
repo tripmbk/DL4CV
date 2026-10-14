@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CO5085 - Coursework & Assignments | BKU</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://googleapis.com" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cloudflare.com">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #080c14;
+        }
+        .tech-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .glow-card:hover {
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.25);
+            border-color: rgba(6, 182, 212, 0.6);
+        }
+        /* Hiệu ứng Dropdown Menu bằng CSS thuần */
+        .dropdown:hover .dropdown-menu {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .dropdown-menu {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen selection:bg-cyan-500 selection:text-slate-900">
+
+    <!-- NAVIGATION BAR WITH DROPDOWN SUBMENU -->
+    <header class="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-cyan-500/20">
+                    <span class="text-sm font-mono">BK</span>
+                </div>
+                <div>
+                    <span class="tech-font font-bold text-lg tracking-tight bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">CO5085</span>
+                    <span class="text-[10px] text-slate-500 block -mt-1 font-mono">Học kỳ 261 (2026-2027)</span>
+                </div>
+            </div>
+            
+            <!-- Navigation Dropdown Menu -->
+            <nav class="hidden md:flex space-x-6 text-sm font-medium text-slate-400">
+                <a href="#general" class="hover:text-cyan-400 transition-colors py-2">Quy định chung</a>
+                
+                <!-- Dropdown 1: Exercises -->
+                <div class="relative dropdown">
+                    <button class="hover:text-cyan-400 transition-colors flex items-center space-x-1 py-2 focus:outline-none">
+                        <span>Exercises</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200"></i>
+                    </button>
+                    <ul class="absolute left-0 mt-0 w-44 bg-slate-950 border border-slate-800 rounded-xl p-1.5 shadow-xl dropdown-menu">
+                        <li><a href="#" class="block px-4 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg transition-colors">Bài tập E1</a></li>
+                        <li><a href="#" class="block px-4 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg transition-colors">Bài tập E2</a></li>
+                        <li><a href="#" class="block px-4 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg transition-colors">Bài tập E3</a></li>
+                    </ul>
+                </div>
+
+                <!-- Dropdown 2: Assignments -->
+                <div class="relative dropdown">
+                    <button class="hover:text-cyan-400 transition-colors flex items-center space-x-1 py-2 focus:outline-none">
+                        <span>Assignments</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200"></i>
+                    </button>
+                    <ul class="absolute left-0 mt-0 w-44 bg-slate-950 border border-slate-800 rounded-xl p-1.5 shadow-xl dropdown-menu">
+                        <li><a href="#" class="block px-4 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg transition-colors">Bài tập lớn A1</a></li>
+                        <li><a href="#" class="block px-4 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg transition-colors">Bài tập lớn A2</a></li>
+                    </ul>
+                </div>
+
+                <a href="#report" class="hover:text-cyan-400 transition-colors py-2">Báo cáo PDF</a>
+            </nav>
+            
+            <!-- GitHub Button -->
+            <div class="flex items-center space-x-4">
+                <a href="#" target="_blank" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all">
+                    <i class="fa-brands fa-github text-sm"></i>
+                    <span>GitHub Repo</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN HERO CONTENT PLACEHOLDER -->
+    <main class="max-w-6xl mx-auto px-4 py-16">
+        <div class="text-center py-20 border border-dashed border-slate-800 rounded-3xl bg-slate-950/20">
+            <h1 class="tech-font text-4xl font-bold mb-4 bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">
+                Không gian nội dung môn học
+            </h1>
+            <p class="text-slate-500 text-sm max-w-md mx-auto">
+                Thanh menu phía trên đã được tích hợp cấu trúc Dropdown hoàn chỉnh. Bạn có thể chèn nội dung trang web hoặc liên kết các bài tập tại đây.
+            </p>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-950 bg-slate-950 py-6 text-center text-[11px] text-slate-600">
+        <p>© 2026 - Môn học CO5085 - Khoa Khoa học và Kỹ thuật Máy tính - ĐH Bách Khoa TP.HCM</p>
+    </footer>
+
+</body>
+</html>
