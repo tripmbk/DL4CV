@@ -1,2 +1,4 @@
-A1/Retrain/data
-A1/Retrain/__pycache__
+A1/Retrain/data/
+A1/Retrain/__pycache__/
+A1/Retrain/results/checkpoints/
+A1/Retrain/best_resnet18_cifar100.pth

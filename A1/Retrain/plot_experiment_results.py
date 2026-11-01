@@ -11,17 +11,6 @@ def plot_experiment_results(
     output_dir="results/plots",
     experiment_ids=None
 ):
-    """
-    Đọc experiment_results.json và vẽ:
-
-    1. Train/Validation Loss cho từng experiment.
-    2. Train/Validation Accuracy cho từng experiment.
-    3. So sánh Test Accuracy.
-    4. So sánh Training Time.
-    5. So sánh GPU Memory.
-    6. So sánh Model Parameters.
-    """
-
     os.makedirs(output_dir, exist_ok=True)
 
     # =================================================
@@ -38,30 +27,44 @@ def plot_experiment_results(
 
     experiments = data.get("experiments", [])
 
+    # Filter by experiment IDs if requested
     if experiment_ids is not None:
         experiments = [
             exp for exp in experiments
             if exp.get("experiment_id") in experiment_ids
         ]
 
+    # Exclude failed experiments and experiments without history
+    valid_experiments = []
+
+    for exp in experiments:
+        status = exp.get("metadata", {}).get("status", "unknown")
+        history = exp.get("training_history", [])
+
+        if status == "failed":
+            print("Skip failed experiment:", exp.get("experiment_id"))
+            continue
+
+        if not history:
+            print("Skip empty history:", exp.get("experiment_id"))
+            continue
+
+        valid_experiments.append(exp)
+
+    experiments = valid_experiments
+
     if not experiments:
-        print("Không tìm thấy experiment phù hợp.")
+        print("Không tìm thấy experiment hợp lệ.")
         return
 
-    print(f"Tìm thấy {len(experiments)} experiment.")
+    print(f"Tìm thấy {len(experiments)} experiment hợp lệ.")
 
     # =================================================
     # 2. HELPER FUNCTIONS
     # =================================================
 
     def get_name(exp):
-        metadata = exp.get("metadata", {})
-
-        model = metadata.get("model", "Unknown")
-        strategy = metadata.get("strategy", "Unknown")
-        seed = metadata.get("seed", "Unknown")
-
-        return f"{model}_{strategy}_seed{seed}"
+        return exp.get("experiment_id", "Unknown")
 
     def safe_filename(name):
         return re.sub(r'[\\/*?:"<>|]', "_", name)
@@ -76,6 +79,31 @@ def plot_experiment_results(
         except (TypeError, ValueError):
             return None
 
+    # Convert accuracy from fraction [0, 1] to percentage [0, 100]
+    def normalize_accuracy(value):
+        value = get_numeric_value(value)
+
+        if value is None:
+            return None
+
+        if 0 <= value <= 1:
+            return value * 100.0
+
+        return value
+
+    def get_memory(computation):
+        # Support different logger field names
+        value = computation.get(
+            "max_peak_memory_allocated_mb"
+        )
+
+        if value is None:
+            value = computation.get(
+                "peak_memory_allocated_mb"
+            )
+
+        return get_numeric_value(value)
+
     # =================================================
     # 3. LEARNING CURVES
     # =================================================
@@ -87,12 +115,10 @@ def plot_experiment_results(
 
         history = exp.get("training_history", [])
 
-        if not history:
-            print(f"Không có training history: {name}")
-            continue
-
-        # Đọc đúng cấu trúc JSON thực tế
-        epochs = [item.get("epoch") for item in history]
+        epochs = [
+            item.get("epoch")
+            for item in history
+        ]
 
         train_loss = [
             get_numeric_value(item.get("train_loss"))
@@ -105,30 +131,32 @@ def plot_experiment_results(
         ]
 
         train_acc = [
-            get_numeric_value(item.get("train_accuracy"))
+            normalize_accuracy(item.get("train_accuracy"))
             for item in history
         ]
 
         val_acc = [
-            get_numeric_value(item.get("val_accuracy"))
+            normalize_accuracy(item.get("val_accuracy"))
             for item in history
         ]
 
-        # -----------------------------
+        # -------------------------------------------------
         # LOSS CURVE
-        # -----------------------------
+        # -------------------------------------------------
 
         plt.figure(figsize=(10, 5))
 
         plt.plot(
-            epochs, train_loss,
+            epochs,
+            train_loss,
             label="Train Loss",
             marker="o",
             markersize=3
         )
 
         plt.plot(
-            epochs, val_loss,
+            epochs,
+            val_loss,
             label="Validation Loss",
             marker="s",
             markersize=3
@@ -142,38 +170,47 @@ def plot_experiment_results(
         plt.tight_layout()
 
         plt.savefig(
-            os.path.join(output_dir, f"{filename}_loss.png"),
+            os.path.join(
+                output_dir,
+                f"{filename}_loss.png"
+            ),
             dpi=300
         )
 
         plt.close()
 
-        # -----------------------------
+        # -------------------------------------------------
         # ACCURACY CURVE
-        # -----------------------------
+        # -------------------------------------------------
 
         plt.figure(figsize=(10, 5))
 
         plt.plot(
-            epochs, train_acc,
+            epochs,
+            train_acc,
             label="Train Accuracy",
             marker="o",
             markersize=3
         )
 
         plt.plot(
-            epochs, val_acc,
+            epochs,
+            val_acc,
             label="Validation Accuracy",
             marker="s",
             markersize=3
         )
 
-        # Đánh dấu best validation accuracy
-        best_checkpoint = exp.get("best_checkpoint", {})
-        best_epoch = best_checkpoint.get("best_epoch")
-        best_accuracy = best_checkpoint.get("best_val_accuracy")
+        # Best checkpoint
+        best = exp.get("best_checkpoint", {})
+
+        best_epoch = best.get("best_epoch")
+        best_accuracy = normalize_accuracy(
+            best.get("best_val_accuracy")
+        )
 
         if best_epoch is not None and best_accuracy is not None:
+
             plt.scatter(
                 [best_epoch],
                 [best_accuracy],
@@ -191,11 +228,16 @@ def plot_experiment_results(
         plt.tight_layout()
 
         plt.savefig(
-            os.path.join(output_dir, f"{filename}_accuracy.png"),
+            os.path.join(
+                output_dir,
+                f"{filename}_accuracy.png"
+            ),
             dpi=300
         )
 
         plt.close()
+
+        print(f"Created learning curves: {name}")
 
     # =================================================
     # 4. COMPARISON FUNCTION
@@ -205,7 +247,8 @@ def plot_experiment_results(
         title,
         ylabel,
         filename,
-        value_function
+        value_function,
+        normalize=False
     ):
 
         names = []
@@ -213,14 +256,19 @@ def plot_experiment_results(
 
         for exp in experiments:
 
-            value = get_numeric_value(value_function(exp))
+            value = value_function(exp)
+
+            if normalize:
+                value = normalize_accuracy(value)
+            else:
+                value = get_numeric_value(value)
 
             if value is not None:
                 names.append(get_name(exp))
                 values.append(value)
 
         if not values:
-            print(f"Không có dữ liệu: {title}")
+            print(f"No data for: {title}")
             return
 
         plt.figure(figsize=(12, 6))
@@ -253,6 +301,8 @@ def plot_experiment_results(
 
         plt.close()
 
+        print("Created comparison:", filename)
+
     # =================================================
     # 5. TEST ACCURACY
     # =================================================
@@ -262,11 +312,27 @@ def plot_experiment_results(
         ylabel="Accuracy (%)",
         filename="test_accuracy.png",
         value_function=lambda exp:
-            exp.get("testing", {}).get("accuracy")
+            exp.get("testing", {}).get("accuracy"),
+        normalize=True
     )
 
     # =================================================
-    # 6. TRAINING TIME
+    # 6. BEST VALIDATION ACCURACY
+    # =================================================
+
+    plot_comparison(
+        title="Best Validation Accuracy Comparison",
+        ylabel="Accuracy (%)",
+        filename="best_val_accuracy.png",
+        value_function=lambda exp:
+            exp.get("best_checkpoint", {}).get(
+                "best_val_accuracy"
+            ),
+        normalize=True
+    )
+
+    # =================================================
+    # 7. TRAINING TIME
     # =================================================
 
     plot_comparison(
@@ -274,11 +340,13 @@ def plot_experiment_results(
         ylabel="Time (seconds)",
         filename="training_time.png",
         value_function=lambda exp:
-            exp.get("computation", {}).get("training_time_sec")
+            exp.get("computation", {}).get(
+                "training_time_sec"
+            )
     )
 
     # =================================================
-    # 7. GPU MEMORY
+    # 8. GPU MEMORY
     # =================================================
 
     plot_comparison(
@@ -286,13 +354,11 @@ def plot_experiment_results(
         ylabel="Memory (MB)",
         filename="gpu_memory.png",
         value_function=lambda exp:
-            exp.get("computation", {}).get(
-                "max_peak_memory_allocated_mb"
-            )
+            get_memory(exp.get("computation", {}))
     )
 
     # =================================================
-    # 8. MODEL PARAMETERS
+    # 9. MODEL PARAMETERS
     # =================================================
 
     plot_comparison(
@@ -301,16 +367,29 @@ def plot_experiment_results(
         filename="model_parameters.png",
         value_function=lambda exp:
             (
-                exp.get("complexity", {}).get("total_params")
+                exp.get("complexity", {}).get("total_params", 0)
                 / 1_000_000
-                if exp.get("complexity", {}).get("total_params")
-                is not None
-                else None
             )
     )
 
     # =================================================
-    # 9. SUMMARY
+    # 10. TRAINABLE PARAMETERS
+    # =================================================
+
+    plot_comparison(
+        title="Trainable Model Parameters",
+        ylabel="Parameters (Millions)",
+        filename="trainable_parameters.png",
+        value_function=lambda exp:
+            (
+                exp.get("complexity", {}).get(
+                    "trainable_params", 0
+                ) / 1_000_000
+            )
+    )
+
+    # =================================================
+    # 11. SUMMARY
     # =================================================
 
     print("\n========== EXPERIMENT SUMMARY ==========")
@@ -322,16 +401,49 @@ def plot_experiment_results(
         testing = exp.get("testing", {})
         computation = exp.get("computation", {})
         best = exp.get("best_checkpoint", {})
+        complexity = exp.get("complexity", {})
 
         print(f"\nExperiment: {name}")
-        print(f"Best Epoch: {best.get('best_epoch')}")
-        print(f"Best Val Accuracy: {best.get('best_val_accuracy')}")
-        print(f"Test Accuracy: {testing.get('accuracy')}")
-        print(f"Training Time: {computation.get('training_time_sec')} sec")
+
+        print(
+            "Best Epoch:",
+            best.get("best_epoch")
+        )
+
+        print(
+            "Best Val Accuracy:",
+            normalize_accuracy(
+                best.get("best_val_accuracy")
+            )
+        )
+
+        print(
+            "Test Accuracy:",
+            normalize_accuracy(
+                testing.get("accuracy")
+            )
+        )
+
+        print(
+            "Training Time:",
+            computation.get("training_time_sec"),
+            "sec"
+        )
+
         print(
             "Peak GPU Memory:",
-            computation.get("max_peak_memory_allocated_mb"),
+            get_memory(computation),
             "MB"
+        )
+
+        print(
+            "Total Parameters:",
+            complexity.get("total_params")
+        )
+
+        print(
+            "Trainable Parameters:",
+            complexity.get("trainable_params")
         )
 
     print("\nĐã hoàn thành vẽ biểu đồ.")
@@ -339,7 +451,7 @@ def plot_experiment_results(
 
 
 # =====================================================
-# 10. RUN
+# 12. RUN
 # =====================================================
 
 if __name__ == "__main__":
